@@ -1,0 +1,60 @@
+body
+{
+    margin: 0;
+  
+}
+h1
+{
+    font-size: 4rem;
+    color: white;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    position: absolute;
+    left: 33% ;
+    
+}
+
+a
+{
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    position: absolute;
+    margin: 2rem;
+    font-size: 2rem;
+    border-style: solid;
+    border-bottom: none;
+    border-color: blue;
+    background-color: #FF3747;
+    box-shadow: 0 5px 0 navy;
+    padding: 0.5%;
+    color: white;
+    text-decoration: none;
+    display: inline-block;
+}
+.background-image
+{
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+.first
+{
+    left: 7rem;
+    top: 20rem;
+}
+
+.second
+{
+    left: 7rem;
+    top: 40rem;
+}
+
+.third
+{
+    right: 7rem;
+    top: 20rem;
+}
+
+.fourth
+{
+    right: 7rem;
+    top: 40rem;
+}
