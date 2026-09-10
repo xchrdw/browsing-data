@@ -258,7 +258,7 @@
     async function getSharedDictionary() {
       try {
         let controller = new AbortController();
-        let timeoutId = setTimeout(() => controller.abort(), 500);
+        let timeoutId = setTimeout(() => controller.abort(), 5000);
         let res = await fetch(`https://httpbin.org/headers?t=${Date.now()}`, { signal: controller.signal });
         clearTimeout(timeoutId);
         let data = await res.json();
@@ -279,13 +279,14 @@
     async function setSharedDictionary(x) {
       let dictUrl = `https://httpbin.org/response-headers?use-as-dictionary=${encodeURIComponent(`match="/headers*", id="${x}"`)}&cache-control=${encodeURIComponent('max-age=3600')}&access-control-allow-origin=*`;
       let controller = new AbortController();
-      let timeoutId = setTimeout(() => controller.abort(), 500);
+      let timeoutId = setTimeout(() => controller.abort(), 5000);
       try {
         await fetch(dictUrl, { signal: controller.signal });
       } finally {
         clearTimeout(timeoutId);
       }
-      for (let i = 0; i < 10; i++) {
+      let start = Date.now();
+      while (Date.now() - start < 5000) {
         await new Promise(r => setTimeout(r, 200));
         let val = await getSharedDictionary();
         if (val) break;
@@ -311,30 +312,48 @@
       "[js] WebLocks": [getWebLock, setWebLock],
     }
 
+    async function readDataType(t, i) {
+      let el = document.getElementById("data-" + i);
+      try {
+        let data = await datatypes[t][0]();
+        if (el) el.innerText = data ? data : "-";
+      } catch (e) {
+        console.log("error reading data for " + t, e);
+        if (el) el.innerText = "-";
+      }
+    }
+
     async function readData() {
+      let keys = Object.keys(datatypes);
       let out = "";
-      for (let t of Object.keys(datatypes)) {
-        let data;
-        try {
-          data = await datatypes[t][0]();
-        } catch (e) {
-          console.log("error reading data for " + t, e);
-        }
-        out += `<div>${t}<span style="float:right">${data ? data : "-"}<span></div>`;
-      };
+      for (let i = 0; i < keys.length; i++) {
+        out += `<div>${keys[i]}<span id="data-${i}" style="float:right">...</span></div>`;
+      }
       document.getElementById("output").innerHTML = out;
+
+      keys.forEach((t, i) => {
+        readDataType(t, i);
+      });
     }
 
     async function writeData() {
       let time = new Date().toJSON().slice(11, 23);
-      for (let t of Object.keys(datatypes)) {
-        try {
-          let data = await datatypes[t][1](time);
-        } catch (e) {
-          console.log("error writing data for " + t, e);
+      let keys = Object.keys(datatypes);
+      if (!document.getElementById("data-0")) {
+        let out = "";
+        for (let i = 0; i < keys.length; i++) {
+          out += `<div>${keys[i]}<span id="data-${i}" style="float:right">...</span></div>`;
         }
-      };
-      readData();
+        document.getElementById("output").innerHTML = out;
+      }
+      keys.forEach((t, i) => {
+        let el = document.getElementById("data-" + i);
+        if (el) el.innerText = "...";
+        Promise.resolve()
+          .then(() => datatypes[t][1](time))
+          .catch(e => console.log("error writing data for " + t, e))
+          .then(() => readDataType(t, i));
+      });
     }
 
     function displayStorageAccess(message) {
