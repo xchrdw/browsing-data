@@ -275,6 +275,43 @@
       });
     }
 
+    async function getSharedDictionary() {
+      try {
+        let controller = new AbortController();
+        let timeoutId = setTimeout(() => controller.abort(), 500);
+        let res = await fetch(`https://httpbin.org/headers?t=${Date.now()}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        let data = await res.json();
+        let headers = data && data.headers;
+        if (!headers) return false;
+        for (let key of Object.keys(headers)) {
+          if (key.toLowerCase().includes("available-dictionary")) {
+            return headers[key].replace(/:/g, '').slice(0, 10);
+          }
+        }
+        return false;
+      } catch (e) {
+        console.log("failed to get shared dictionary", e);
+        return false;
+      }
+    }
+
+    async function setSharedDictionary(x) {
+      let dictUrl = `https://httpbin.org/response-headers?use-as-dictionary=${encodeURIComponent(`match="/headers*", id="${x}"`)}&cache-control=${encodeURIComponent('max-age=3600')}&access-control-allow-origin=*`;
+      let controller = new AbortController();
+      let timeoutId = setTimeout(() => controller.abort(), 500);
+      try {
+        await fetch(dictUrl, { signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 200));
+        let val = await getSharedDictionary();
+        if (val) break;
+      }
+    }
+
     let datatypes = {
       "Cookies": [() => getCookie('regular'), (x) => setCookie('regular', x, 'Max-Age=2592000; Secure')],
       "Cookies (SS=None)": [() => getCookie('regular_ssnone'), (x) => setCookie('regular_ssnone', x, 'Max-Age=2592000; SameSite=None; Secure')],
@@ -285,6 +322,7 @@
       "IndexedDB": [getIndexedDb, setIndexedDb],
       "FileSystem": [getFileSystem, setFileSystem],
       "CacheStorage": [getCacheStorage, setCacheStorage],
+      "SharedDictionary": [getSharedDictionary, setSharedDictionary],
       "ServiceWorker": [getServiceWorker, setServiceWorker],
       "SessionStorage": [() => sessionStorage.getItem('x'), x => sessionStorage.setItem('x', x)],
       "Navigator.storage": [getNavigatorStorage, setNavigatorStorage],
@@ -309,7 +347,7 @@
     }
 
     async function writeData() {
-      let time = new Date().toJSON();
+      let time = new Date().toJSON().slice(11, 23);
       for (let t of Object.keys(datatypes)) {
         try {
           let data = await datatypes[t][1](time);
