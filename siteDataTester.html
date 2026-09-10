@@ -222,26 +222,6 @@
       return bufView;
     }
 
-    async function setNativeIO(x) {
-      var f = await nativeIO.open("file");
-      f.write(str2ab(x), 0)
-      f.close();
-    }
-
-    async function getNativeIO() {
-      if (typeof nativeIO === 'undefined')
-        return "not supported";
-      let dir = await nativeIO.getAll();
-      if (!dir.length)
-        return;
-
-      var buf = new Uint16Array(new SharedArrayBuffer(100));
-      var f = await nativeIO.open("file");
-      await f.read(buf, 0);
-      f.close();
-      return ab2str(buf);
-    }
-
     async function getNavigatorStorage() {
       let d = await navigator.storage.getDirectory();
       let h = await d.getFileHandle("foo.txt");
@@ -326,7 +306,6 @@
       "ServiceWorker": [getServiceWorker, setServiceWorker],
       "SessionStorage": [() => sessionStorage.getItem('x'), x => sessionStorage.setItem('x', x)],
       "Navigator.storage": [getNavigatorStorage, setNavigatorStorage],
-      "NativeIO": [getNativeIO, setNativeIO],
       "[worker] Navigator.storage ": [() => getWorker("Navigator.storage"), (x) => setWorker("Navigator.storage", x)],
       "[js] SharedWorker": [getSharedWorker, setSharedWorker],
       "[js] WebLocks": [getWebLock, setWebLock],
